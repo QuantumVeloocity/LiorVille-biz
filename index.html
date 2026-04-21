@@ -546,7 +546,9 @@ body::before {
             <polyline points="15 18 9 12 15 6"/>
           </svg>
         </button>
-        <div class="qr-wrap" id="qrcode"></div>
+       <div class="qr-wrap">
+  <img src="qr-code.png" style="width:156px;height:156px;">
+</div>
         <p class="qr-hint">Scan to open card · save contact</p>
         <button class="qr-share" onclick="shareCard()">
           <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
@@ -801,14 +803,6 @@ Our approach focuses on clarity, precision, and execution, ensuring that every s
 </button>
 
 <script>
-/* QR CODE */
-const qrUrl = window.location.href || 'https://aria-chen.co';
-new QRCode(document.getElementById('qrcode'), {
-  text: qrUrl, width: 156, height: 156,
-  colorDark: '#1a1a1a', colorLight: '#ffffff',
-  correctLevel: QRCode.CorrectLevel.H
-});
-
 /* FLIP — fixed: scene has explicit height, faces are position:absolute */
 let flipped = false;
 function doFlip() {
