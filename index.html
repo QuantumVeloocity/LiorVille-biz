@@ -1,0 +1,862 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>LiorVille</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+<style>
+
+/* ── RESET ─────────────────────────────── */
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+html { scroll-behavior: smooth; }
+
+/* ── TOKENS ─────────────────────────────── */
+:root {
+  --bg:          #0a0a0f;
+  --bg2:         #111118;
+  --surface:     #18181f;
+  --surface2:    #1e1e28;
+  --surface3:    #24242f;
+  --border:      rgba(255,255,255,0.07);
+  --border2:     rgba(255,255,255,0.04);
+  --ink:         #f0f0f5;
+  --ink2:        #a0a0b0;
+  --ink3:        #58586a;
+  --gold:        #d4a853;
+  --gold2:       #f0c97a;
+  --green:       #30d158;
+  --blue:        #0a84ff;
+  --r-card:      22px;
+  --shadow:      0 2px 24px rgba(0,0,0,0.5), 0 1px 4px rgba(0,0,0,0.3);
+  --shadow-lg:   0 8px 48px rgba(0,0,0,0.7), 0 2px 12px rgba(0,0,0,0.4);
+  --trans:       all 0.28s cubic-bezier(0.25,0.46,0.45,0.94);
+  /* FONT UPDATED TO APPLE SYSTEM STACK */
+  --font:        -apple-system, BlinkMacSystemFont, "SF Pro Display", "SF Pro Text", "Helvetica Neue", Helvetica, Arial, sans-serif;
+}
+
+/* ── BASE ─────────────────────────────── */
+body {
+  font-family: var(--font);
+  background: var(--bg);
+  color: var(--ink);
+  min-height: 100vh;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale; /* Added for cleaner rendering on macOS/iOS */
+  overflow-x: hidden;
+  /* FORCED BOLD FOR IOS ACCESSIBILITY STYLE */
+  font-weight: 700; 
+}
+
+/* APPLE BOLD OPTIMIZATION */
+h1, h2, h3, h4, strong, .hero-name, .logo-ring, p, span, address, div {
+  font-weight: 800; /* Ultra-bold for high legibility */
+  letter-spacing: -0.015em;
+}
+
+body::before {
+  content: '';
+  position: fixed;
+  top: -160px; left: 50%;
+  transform: translateX(-50%);
+  width: 500px; height: 320px;
+  background: radial-gradient(ellipse, rgba(212,168,83,0.08) 0%, transparent 70%);
+  pointer-events: none;
+  z-index: 0;
+}
+
+/* ── PAGE ─────────────────────────────── */
+.page {
+  position: relative;
+  z-index: 1;
+  max-width: 430px;
+  margin: 0 auto;
+  padding: 20px 14px 72px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+/* ── REVEAL ─────────────────────────────── */
+.reveal {
+  opacity: 0;
+  transform: translateY(20px);
+  animation: up 0.55s cubic-bezier(0.25,0.46,0.45,0.94) forwards;
+}
+@keyframes up { to { opacity:1; transform:translateY(0); } }
+.d1{animation-delay:.06s} .d2{animation-delay:.13s} .d3{animation-delay:.20s}
+.d4{animation-delay:.27s} .d5{animation-delay:.34s} .d6{animation-delay:.41s}
+.d7{animation-delay:.48s} .d8{animation-delay:.55s}
+
+/* ══════════════════════════════════════
+   HERO FLIP CARD
+   Key fix: explicit fixed height on scene
+   Both faces: position:absolute + backface-visibility:hidden
+   ══════════════════════════════════════ */
+.flip-scene {
+  width: 100%;
+  height: 340px;
+  perspective: 1200px;
+  border-radius: var(--r-card);
+}
+
+.flip-inner {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  transform-style: preserve-3d;
+  transition: transform 0.65s cubic-bezier(0.4,0.2,0.2,1);
+}
+.flip-inner.flipped { transform: rotateY(180deg); }
+
+.flip-front,
+.flip-back {
+  position: absolute;
+  inset: 0;
+  backface-visibility: hidden;
+  -webkit-backface-visibility: hidden;
+  border-radius: var(--r-card);
+  overflow: hidden;
+  will-change: transform;
+}
+
+/* ── FRONT ── */
+.flip-front {
+  background:
+    radial-gradient(ellipse at 25% 15%, rgba(212,168,83,0.14) 0%, transparent 55%),
+    radial-gradient(ellipse at 80% 90%, rgba(100,80,200,0.06) 0%, transparent 50%),
+    linear-gradient(155deg, #1a1a24 0%, #0f0f18 60%, #13131c 100%);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 36px 28px;
+  box-shadow: var(--shadow-lg), 0 0 0 1px var(--border);
+}
+
+.flip-trigger {
+  position: absolute;
+  top: 14px; right: 14px;
+  width: 38px; height: 38px;
+  background: rgba(255,255,255,0.06);
+  border: 1px solid rgba(255,255,255,0.1);
+  border-radius: 50%;
+  display: flex; align-items: center; justify-content: center;
+  cursor: pointer;
+  transition: var(--trans);
+  z-index: 10;
+}
+.flip-trigger:hover { background: rgba(255,255,255,0.12); transform: scale(1.08); }
+.flip-trigger svg { color: rgba(255,255,255,0.65); }
+
+.logo-ring {
+  width: 88px; height: 88px;
+  border-radius: 50%;
+  background: linear-gradient(145deg, var(--gold) 0%, var(--gold2) 100%);
+  display: flex; align-items: center; justify-content: center;
+  font-size: 30px; font-weight: 900;
+  color: #1a1205;
+  letter-spacing: -1px;
+  box-shadow:
+    0 0 0 3px rgba(212,168,83,0.25),
+    0 0 28px rgba(212,168,83,0.25),
+    0 6px 20px rgba(0,0,0,0.5);
+  margin-bottom: 4px;
+}
+
+.hero-welcome {
+  font-size: 12px; font-weight: 900;
+  letter-spacing: 2.5px; text-transform: uppercase;
+  color: var(--gold); opacity: 1.0;
+}
+.hero-name {
+  font-size: 30px; font-weight: 900;
+  letter-spacing: -0.8px; line-height: 1; color: #ffffff;
+}
+.hero-sep {
+  width: 36px; height: 2px;
+  background: linear-gradient(90deg, var(--gold), transparent);
+  border-radius: 2px; margin: 2px 0;
+}
+.hero-role {
+  font-size: 13px; font-weight: 800;
+  letter-spacing: 0.3px; color: var(--ink);
+}
+.hero-tag {
+  font-size: 13px; font-weight: 600;
+  color: var(--ink2); font-style: italic;
+}
+
+/* ── BACK ── */
+.flip-back {
+  transform: rotateY(180deg);
+  background: linear-gradient(155deg, #1a1a24 0%, #0f0f18 100%);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 14px;
+  padding: 28px;
+  box-shadow: var(--shadow-lg), 0 0 0 1px var(--border);
+}
+
+.back-close {
+  position: absolute;
+  top: 14px; right: 14px;
+  width: 38px; height: 38px;
+  background: rgba(255,255,255,0.06);
+  border: 1px solid rgba(255,255,255,0.1);
+  border-radius: 50%;
+  display: flex; align-items: center; justify-content: center;
+  cursor: pointer;
+  transition: var(--trans);
+  z-index: 10;
+}
+.back-close:hover { background: rgba(255,255,255,0.12); transform: scale(1.08); }
+.back-close svg { color: rgba(255,255,255,0.65); }
+
+.qr-wrap {
+  padding: 14px;
+  background: #ffffff;
+  border-radius: 18px;
+  box-shadow: 0 4px 24px rgba(0,0,0,0.4);
+}
+.qr-wrap canvas, .qr-wrap img { display: block; border-radius: 8px; }
+
+.qr-hint {
+  font-size: 12px; font-weight: 800;
+  color: var(--ink); text-align: center;
+  line-height: 1.6; letter-spacing: 0.2px;
+}
+.qr-share {
+  display: flex; align-items: center; gap: 7px;
+  padding: 11px 22px;
+  background: linear-gradient(135deg, var(--gold) 0%, var(--gold2) 100%);
+  color: #1a1205; border: none; border-radius: 50px;
+  font-size: 13px; font-weight: 900;
+  cursor: pointer; font-family: var(--font);
+  transition: var(--trans); letter-spacing: 0.2px;
+}
+.qr-share:hover { transform: scale(1.04); box-shadow: 0 4px 16px rgba(212,168,83,0.3); }
+
+/* ── SECTION LABEL ── */
+.sec-label {
+  font-size: 11px; font-weight: 900;
+  letter-spacing: 2px; text-transform: uppercase;
+  color: var(--ink2); padding: 6px 4px 0;
+}
+
+/* ── ACTION GRID ── */
+.actions {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 9px;
+}
+.actions .span2 { grid-column: 1 / -1; }
+
+.act-btn {
+  display: flex; align-items: center; gap: 11px;
+  padding: 14px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 18px;
+  cursor: pointer;
+  transition: var(--trans);
+  text-decoration: none; color: var(--ink);
+  font-family: var(--font);
+  box-shadow: var(--shadow);
+}
+.act-btn:hover {
+  background: var(--surface2);
+  border-color: rgba(255,255,255,0.1);
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-lg);
+}
+.act-btn:active { transform: scale(0.97); }
+
+.act-icon {
+  width: 42px; height: 42px; border-radius: 13px;
+  display: flex; align-items: center; justify-content: center;
+  flex-shrink: 0;
+}
+.ic-dark  { background: linear-gradient(145deg,#2a2a35,#1e1e28); border: 1px solid var(--border2); }
+.ic-green { background: #25D366; }
+.ic-blue  { background: var(--blue); }
+.ic-gold  { background: linear-gradient(145deg, var(--gold), var(--gold2)); }
+.ic-red   { background: #ff453a; }
+
+.act-text { flex: 1; min-width: 0; }
+.act-text strong { display: block; font-size: 13px; font-weight: 900; line-height: 1.2; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.act-text span   { font-size: 11px; font-weight: 700; color: var(--ink2); }
+.act-arr { color: var(--ink2); flex-shrink: 0; }
+
+/* ── GLASS CARD ── */
+.glass {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--r-card);
+  box-shadow: var(--shadow);
+}
+.glass-pad { padding: 20px; }
+.glass h3 { font-size: 20px; font-weight: 900; letter-spacing: -0.4px; margin-bottom: 8px; color: var(--ink); }
+.glass p  { font-size: 14px; font-weight: 700; line-height: 1.75; color: var(--ink); }
+
+/* ── FEATURE GRID ── */
+.feat-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 9px;
+}
+.feat-grid .span2 { grid-column: 1 / -1; }
+
+.feat-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 20px; padding: 17px 15px;
+  box-shadow: var(--shadow); transition: var(--trans);
+}
+.feat-card:hover { transform: translateY(-2px); background: var(--surface2); box-shadow: var(--shadow-lg); }
+
+.feat-emoji {
+  width: 42px; height: 42px;
+  background: var(--surface3); border-radius: 13px;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 20px; margin-bottom: 10px;
+  border: 1px solid var(--border2);
+}
+.feat-card h4 { font-size: 13px; font-weight: 900; margin-bottom: 3px; color: var(--ink); letter-spacing: -0.1px; }
+.feat-card p  { font-size: 12px; font-weight: 700; color: var(--ink2); line-height: 1.5; }
+
+/* ── GALLERY ── */
+.gal-grid {
+  display: grid; grid-template-columns: repeat(3,1fr); gap: 8px;
+}
+.gal-item {
+  aspect-ratio: 1; border-radius: 14px; overflow: hidden;
+  cursor: pointer; position: relative; transition: var(--trans);
+  border: 1px solid var(--border2);
+}
+.gal-item:hover { transform: scale(1.04); }
+.gal-item:hover .gal-over { opacity: 1; }
+
+.gal-over {
+  position: absolute; inset: 0;
+  background: rgba(0,0,0,0.45);
+  display: flex; align-items: center; justify-content: center;
+  opacity: 0; transition: opacity 0.2s;
+}
+.gal-over svg { color: white; }
+.gal-lbl {
+  position: absolute; bottom: 6px; left: 0; right: 0;
+  text-align: center; font-size: 10px; font-weight: 900;
+  color: rgba(255,255,255,0.85); letter-spacing: 0.5px;
+}
+.g1{background:linear-gradient(145deg,#2a1f0a,#d4a853)}
+.g2{background:linear-gradient(145deg,#0a1a2a,#1e5fa0)}
+.g3{background:linear-gradient(145deg,#1a0a2a,#7a3fa0)}
+.g4{background:linear-gradient(145deg,#0a2a15,#1f8a44)}
+.g5{background:linear-gradient(145deg,#2a0a0a,#a03030)}
+.g6{background:linear-gradient(145deg,#1a1a0a,#6a6a20)}
+
+/* ── REVIEWS ── */
+.reviews { display: flex; flex-direction: column; gap: 9px; }
+.review-card {
+  background: var(--surface); border: 1px solid var(--border);
+  border-radius: 18px; padding: 16px;  box-shadow: var(--shadow);
+}
+.stars { color: var(--gold); font-size: 13px; margin-bottom: 6px; letter-spacing: 1px; }
+.review-text { font-size: 13px; font-weight: 700; color: var(--ink); line-height: 1.65; margin-bottom: 10px; font-style: italic; }
+.reviewer { display: flex; align-items: center; gap: 9px; }
+.rev-av {
+  width: 30px; height: 30px; border-radius: 50%;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 12px; font-weight: 900; color: #1a1205; flex-shrink: 0;
+}
+.rev-av.g{background:linear-gradient(135deg,var(--gold),var(--gold2))}
+.rev-av.b{background:linear-gradient(135deg,#0a84ff,#40aaf8)}
+.reviewer strong { font-size: 12px; font-weight: 900; color: var(--ink); }
+.reviewer span   { font-size: 11px; font-weight: 700; color: var(--ink2); }
+
+/* ── MAP CARD ── */
+.map-card {
+  background: var(--surface); border: 1px solid var(--border);
+  border-radius: var(--r-card); overflow: hidden; box-shadow: var(--shadow);
+}
+.map-vis {
+  width: 100%; height: 170px; background: #12121a; position: relative; overflow: hidden;
+}
+.map-vis::before {
+  content: ''; position: absolute; inset: 0;
+  background:
+    linear-gradient(rgba(255,255,255,0.03) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(255,255,255,0.03) 1px, transparent 1px);
+  background-size: 28px 28px;
+}
+.map-vis::after {
+  content: ''; position: absolute; inset: 0;
+  background: radial-gradient(ellipse at 50% 50%, rgba(212,168,83,0.06) 0%, transparent 65%);
+}
+.map-dot {
+  position: absolute; top: 50%; left: 50%;
+  transform: translate(-50%,-60%) rotate(-45deg);
+  width: 18px; height: 18px;
+  background: var(--gold); border-radius: 50% 50% 50% 0;
+  box-shadow: 0 0 12px rgba(212,168,83,0.6); z-index: 2;
+}
+.map-dot::after {
+  content: ''; width: 7px; height: 7px;
+  background: #1a1205; border-radius: 50%;
+  position: absolute; top: 50%; left: 50%;
+  transform: translate(-50%,-50%) rotate(45deg);
+}
+.map-pulse {
+  position: absolute; top: 50%; left: 50%;
+  transform: translate(-50%,-50%);
+  width: 40px; height: 40px; border-radius: 50%;
+  background: rgba(212,168,83,0.15);
+  animation: pulse 2s ease-out infinite; z-index: 1;
+}
+@keyframes pulse {
+  0%   { transform: translate(-50%,-50%) scale(0.6); opacity: 0.8; }
+  100% { transform: translate(-50%,-50%) scale(2.2); opacity: 0; }
+}
+.map-badge {
+  position: absolute; bottom: 12px; left: 12px;
+  background: rgba(18,18,26,0.9); border: 1px solid var(--border);
+  border-radius: 10px; padding: 5px 10px;
+  font-size: 11px; font-weight: 900; color: var(--gold);
+  z-index: 2; backdrop-filter: blur(8px);
+}
+.map-body { padding: 16px 18px; }
+.map-body address {
+  font-style: normal; font-size: 13px; font-weight: 700;
+  color: var(--ink); line-height: 1.65; margin-bottom: 12px;
+}
+.map-body address strong { display: block; font-size: 15px; font-weight: 900; color: var(--ink); margin-bottom: 3px; }
+.chip-row { display: flex; gap: 7px; flex-wrap: wrap; margin-bottom: 12px; }
+.chip {
+  display: flex; align-items: center; gap: 5px;
+  padding: 7px 12px;
+  background: var(--surface2); border: 1px solid var(--border);
+  border-radius: 50px; font-size: 12px; font-weight: 800;
+  color: var(--ink); text-decoration: none; transition: var(--trans);
+}
+.chip:hover { background: var(--surface3); color: var(--ink); }
+.dir-btn {
+  display: flex; align-items: center; justify-content: center; gap: 7px;
+  width: 100%; padding: 13px;
+  background: linear-gradient(135deg, var(--gold) 0%, var(--gold2) 100%);
+  color: #1a1205; border: none; border-radius: 14px;
+  font-size: 14px; font-weight: 900;
+  cursor: pointer; font-family: var(--font);
+  transition: var(--trans); text-decoration: none; letter-spacing: 0.2px;
+  box-shadow: 0 4px 16px rgba(212,168,83,0.25);
+}
+.dir-btn:hover { transform: translateY(-1px); box-shadow: 0 6px 24px rgba(212,168,83,0.35); }
+
+/* ── SOCIAL ── */
+.soc-row { display: flex; justify-content: center; gap: 11px; flex-wrap: wrap; }
+.soc-btn {
+  width: 52px; height: 52px; border-radius: 50%;
+  display: flex; align-items: center; justify-content: center;
+  text-decoration: none;
+  background: var(--surface); border: 1px solid var(--border);
+  box-shadow: var(--shadow); transition: var(--trans); color: var(--ink);
+}
+.soc-btn:hover { transform: translateY(-3px) scale(1.06); color: var(--ink); background: var(--surface2); box-shadow: var(--shadow-lg); }
+
+/* ── FOOTER ── */
+.footer { text-align: center; padding: 12px 0 4px; font-size: 12px; font-weight: 800; color: var(--ink2); opacity: 0.7; letter-spacing: 0.5px; }
+
+/* ── LIGHTBOX ── */
+.lb {
+  position: fixed; inset: 0;
+  background: rgba(0,0,0,0.88);
+  display: flex; align-items: center; justify-content: center;
+  z-index: 200; opacity: 0; pointer-events: none;
+  transition: opacity 0.25s; backdrop-filter: blur(12px);
+}
+.lb.open { opacity: 1; pointer-events: all; }
+.lb-inner {
+  width: 82vw; max-width: 320px; aspect-ratio: 1;
+  border-radius: 22px; overflow: hidden;
+  transform: scale(0.88);
+  transition: transform 0.32s cubic-bezier(0.34,1.56,0.64,1);
+  border: 1px solid var(--border);
+}
+.lb.open .lb-inner { transform: scale(1); }
+.lb-x {
+  position: absolute; top: 20px; right: 20px;
+  width: 38px; height: 38px;
+  background: rgba(255,255,255,0.1); border: none;
+  border-radius: 50%; color: white; cursor: pointer;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 17px; font-weight: 900; backdrop-filter: blur(8px);
+  transition: var(--trans); font-family: var(--font);
+}
+.lb-x:hover { background: rgba(255,255,255,0.2); }
+
+/* ── SCROLL TOP ── */
+.scrtop {
+  position: fixed; bottom: 22px; right: 14px;
+  width: 44px; height: 44px;
+  background: var(--surface2); border: 1px solid var(--border);
+  color: var(--ink); border-radius: 50%;
+  display: flex; align-items: center; justify-content: center;
+  cursor: pointer; box-shadow: var(--shadow-lg);
+  transition: var(--trans); opacity: 0; transform: translateY(20px); z-index: 50;
+}
+.scrtop.on { opacity: 1; transform: translateY(0); }
+.scrtop:hover { transform: translateY(-2px); }
+
+</style>
+</head>
+<body>
+
+<div class="page">
+
+  <div class="flip-scene reveal d1">
+    <div class="flip-inner" id="flipInner">
+
+      <div class="flip-front">
+        <button class="flip-trigger" onclick="doFlip()" title="Show QR Code">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+            <rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/>
+            <rect x="3" y="14" width="7" height="7" rx="1"/>
+            <path d="M14 14h3v3m0 4h4m-4 0v-4m4 0h-3"/>
+          </svg>
+        </button>
+ <div class="logo-ring">
+  <img src="logo.png" alt="Logo"
+       style="width:110%; height:110%; border-radius:50%; object-fit:cover;">
+</div>
+        <div class="hero-welcome">Welcome to</div>
+        <div class="hero-name">LiorVille</div>
+        <div class="hero-sep"></div>
+        <div class="hero-role">A Market Intel Firm-</div>
+        <div class="hero-tag">"Data That Big Firms FEAR"</div>
+      </div>
+
+      <div class="flip-back">
+        <button class="back-close" onclick="doFlip()" title="Flip back">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+            <polyline points="15 18 9 12 15 6"/>
+          </svg>
+        </button>
+        <div class="qr-wrap" id="qrcode"></div>
+        <p class="qr-hint">Scan to open card · save contact</p>
+        <button class="qr-share" onclick="shareCard()">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+            <circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/>
+            <line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/>
+          </svg>
+          Share Card
+        </button>
+      </div>
+
+    </div>
+  </div>
+
+  <p class="sec-label reveal d2">Quick Actions</p>
+  <div class="actions reveal d2">
+
+    <a href="tel:+917079762521" class="act-btn">
+      <div class="act-icon ic-dark">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07A19.5 19.5 0 0 1 4.69 13.6 19.79 19.79 0 0 1 1.61 5a2 2 0 0 1 1.95-2.18h3a2 2 0 0 1 2 1.72c.127.96.361 1.903.7 2.81a2 2 0 0 1-.45 2.11L7.91 10a16 16 0 0 0 6 6l.92-.92a2 2 0 0 1 2.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0 1 22 17v-.08z"/>
+        </svg>
+      </div>
+      <div class="act-text"><strong>Call Now</strong><span>Direct line</span></div>
+      <svg class="act-arr" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"/></svg>
+    </a>
+
+    <a href="https://wa.me/7079762521" class="act-btn">
+      <div class="act-icon ic-green">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="white">
+          <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51a13 13 0 0 0-.57-.01c-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 0 1-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 0 1-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 0 1 2.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0 0 12.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 0 0 5.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 0 0-3.48-8.413z"/>
+        </svg>
+      </div>
+      <div class="act-text"><strong>WhatsApp</strong><span>Chat with me</span></div>
+      <svg class="act-arr" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"/></svg>
+    </a>
+
+    <a href="https://liorville.framer.website" class="act-btn">
+      <div class="act-icon ic-blue">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/>
+          <path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/>
+        </svg>
+      </div>
+      <div class="act-text"><strong>Website</strong><span>liorville.framer.website</span></div>
+      <svg class="act-arr" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"/></svg>
+    </a>
+
+    <a 
+  href="data:text/vcard;charset=utf-8,BEGIN:VCARD%0AVERSION:3.0%0AFN:Aditya Shaurya%0AORG:LiorVille%0AEMAIL:teamliorville@gmail.com%0ATEL:+9170xd762521%0AADR:;;Varanasi;Uttar Pradesh;;India%0AEND:VCARD"
+  download="LiorVille_Contact.vcf"
+  class="act-btn"
+>
+  <div class="act-icon ic-gold">
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#1a1205" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+      <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+      <polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/>
+    </svg>
+  </div>
+
+  <div class="act-text">
+    <strong>Contact</strong>
+    <span>Save Contact</span>
+  </div>
+
+  <svg class="act-arr" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+    <polyline points="9 18 15 12 9 6"/>
+  </svg>
+</a>
+    <a href="https://mail.google.com/mail/?view=cm&to=teamliorville@gmail.com" class="act-btn span2">
+      <div class="act-icon ic-red">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/>
+          <polyline points="22,6 12,13 2,6"/>
+        </svg>
+      </div>
+      <div class="act-text"><strong>Send Email</strong><span>teamliorville@gmail.com</span></div>
+      <svg class="act-arr" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"/></svg>
+    </a>
+
+  </div>
+
+  <p class="sec-label reveal d3">About</p>
+  <div class="glass glass-pad reveal d3">
+    <h3>We Are LiorVille</h3>
+    <p>We help ambitious Indian brands enter new markets, develop effective pricing strategies, and achieve sustainable growth through data-driven decision-making rather than assumptions.
+
+Our approach focuses on clarity, precision, and execution, ensuring that every step contributes to measurable and meaningful business results..</p>
+  </div>
+
+  <p class="sec-label reveal d4">Why Work With Us?</p>
+  <div class="feat-grid reveal d4">
+    <div class="feat-card">
+      <div class="feat-emoji">🎯</div>
+      <h4>India Based</h4>
+      <p>Deep understanding of Indian customers, pricing behavior, and competition..</p>
+    </div>
+    <div class="feat-card">
+      <div class="feat-emoji">✦</div>
+      <h4>No Big Volumes</h4>
+      <p>We don't provide big volumes for money which you don't even need.</p>
+    </div>
+    <div class="feat-card">
+      <div class="feat-emoji">⚡</div>
+      <h4>Fast Delivery</h4>
+      <p>Structured process, every deadline met before time.</p>
+    </div>
+    <div class="feat-card">
+      <div class="feat-emoji" >🌐</div>
+      <h4>Additional Perks</h4>
+      <p>You get omplete access to our Founders Club even at basic plans.</p>
+    </div>
+    <div class="feat-card span2" style="display:flex;align-items:center;gap:14px;">
+      <div class="feat-emoji" style="flex-shrink:0;margin-bottom:0;">💬</div>
+      <div>
+        <h4>White-Glove Service</h4>
+        <p>Direct communication — no middlemen, no agencies.</p>
+      </div>
+    </div>
+  </div>
+
+  <p class="sec-label reveal d5">Services</p>
+  <div class="glass reveal d5" style="padding:14px;">
+    <div class="gal-grid">
+      <div class="gal-item g1" onclick="openLb('g1')">
+        <div class="gal-over"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M15 3h6v6M14 10l6.1-6.1M9 21H3v-6M10 14l-6.1 6.1"/></svg></div>
+        <div class="gal-lbl">Market Research</div>
+      </div>
+      <div class="gal-item g2" onclick="openLb('g2')">
+        <div class="gal-over"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M15 3h6v6M14 10l6.1-6.1M9 21H3v-6M10 14l-6.1 6.1"/></svg></div>
+        <div class="gal-lbl">Prcing Strategy</div>
+      </div>
+      <div class="gal-item g3" onclick="openLb('g3')">
+        <div class="gal-over"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M15 3h6v6M14 10l6.1-6.1M9 21H3v-6M10 14l-6.1 6.1"/></svg></div>
+        <div class="gal-lbl">Market Entry</div>
+      </div>
+      <div class="gal-item g4" onclick="openLb('g4')">
+        <div class="gal-over"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M15 3h6v6M14 10l6.1-6.1M9 21H3v-6M10 14l-6.1 6.1"/></svg></div>
+        <div class="gal-lbl">Customer Targetting</div>
+      </div>
+      <div class="gal-item g5" onclick="openLb('g5')">
+        <div class="gal-over"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M15 3h6v6M14 10l6.1-6.1M9 21H3v-6M10 14l-6.1 6.1"/></svg></div>
+        <div class="gal-lbl">B2B Meeting Setup</div>
+      </div>
+      <div class="gal-item g6" onclick="openLb('g6')">
+        <div class="gal-over"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M15 3h6v6M14 10l6.1-6.1M9 21H3v-6M10 14l-6.1 6.1"/></svg></div>
+        <div class="gal-lbl">Distribution Strategy</div>
+      </div>
+    </div>
+  </div>
+
+  <p class="sec-label reveal d6">Client Reviews</p>
+  <div class="reviews reveal d6">
+    <div class="review-card">
+      <div class="stars">★★★★★</div>
+      <p class="review-text">"A really great team of young men, they are doing really great job, within 4 weeks wemade over 300+ orders ina single day for the first time, and now scaling and being consistent with 150 orders per day."</p>
+      <div class="reviewer">
+        <div class="rev-av g">AT</div>
+        <div><strong>Amit Trivedi</strong><span> · Owner, Waffle Zaika</span></div>
+      </div>
+    </div>
+    <div class="review-card">
+      <div class="stars">★★★★</div>
+      <p class="review-text">"Really good experience with the team, the biggest key differentiator is their small volumes with tons of useful data, but need to improve in their communications.."</p>
+      <div class="reviewer">
+        <div class="rev-av b">RA</div>
+        <div><strong>Ranveer Aggarwal</strong><span> · Onwer, Aggarwal's Sweets </span></div>
+      </div>
+    </div>
+  </div>
+
+  <p class="sec-label reveal d7">Location & Contact</p>
+
+<div class="map-card reveal d7">
+  
+  <div class="map-vis">
+    
+    <!-- Screenshot map -->
+    <img src="map.png" class="map-img" alt="Location Map">
+
+    <div class="map-pulse"></div>
+    <div class="map-dot"></div>
+    <div class="map-badge">📍 Sigra Chauraha, Varanasi</div>
+
+  </div>
+
+  <div class="map-body">
+      <address>
+        <strong>LiorVille</strong>
+       Sigra, Varanasi, Uttar Pradesh – 221010<br>India
+      </address>
+      <div class="chip-row">
+        <a href="tel:+917079762521" class="chip">
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-5.99-5.99 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72c.127.96.361 1.903.7 2.81a2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0 1 22 16.92z"/></svg>
+          +91 7079762521
+        </a>
+        <a href="https://mail.google.com/mail/?view=cm&to=teamliorville@gmail.com" class="chip">
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg>
+          Email Us
+        </a>
+      </div>
+      <a href="https://www.google.com/maps/place/Sigra+Chauraha/@25.311557,82.9885431,19.5z/data=!4m7!3m6!1s0x398e2dfee6057b33:0xcb1e684fd4726865!4b1!8m2!3d25.310441!4d82.989432!16s%2Fg%2F11csccgg7s?entry=ttu&g_ep=EgoyMDI2MDQxNS4wIKXMDSoASAFQAw%3D%3D" class="dir-btn" target="_blank">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polygon points="3 11 22 2 13 21 11 13 3 11"/></svg>
+        Get Directions
+      </a>
+    </div>
+  </div>
+
+  <p class="sec-label reveal d7">Connect</p>
+  <div class="glass glass-pad reveal d7">
+    <div class="soc-row">
+      <a href="#" class="soc-btn" title="Instagram">
+        <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+          <rect x="2" y="2" width="20" height="20" rx="5" ry="5"/><path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z"/><line x1="17.5" y1="6.5" x2="17.51" y2="6.5"/>
+        </svg>
+      </a>
+      <a href="#" class="soc-btn" title="LinkedIn">
+        <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M16 8a6 6 0 0 1 6 6v7h-4v-7a2 2 0 0 0-2-2 2 2 0 0 0-2 2v7h-4v-7a6 6 0 0 1 6-6z"/>
+          <rect x="2" y="9" width="4" height="12"/><circle cx="4" cy="4" r="2"/>
+        </svg>
+      </a>
+      <a href="#" class="soc-btn" title="X / Twitter">
+        <svg width="17" height="17" viewBox="0 0 24 24" fill="currentColor">
+          <path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"/>
+        </svg>
+      </a>
+      <a href="#" class="soc-btn" title="Dribbble">
+        <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+          <circle cx="12" cy="12" r="10"/>
+          <path d="M8.56 2.75c4.37 6.03 6.02 9.42 8.03 17.72m2.54-15.38c-3.72 4.35-8.94 5.66-16.88 5.85m19.5 1.9c-3.5-.93-6.63-.82-8.94 0-2.58.92-5.01 2.86-7.44 6.32"/>
+        </svg>
+      </a>
+      <a href="#" class="soc-btn" title="Behance">
+        <svg width="19" height="19" viewBox="0 0 24 24" fill="currentColor" style="color:var(--ink2)">
+          <path d="M7.799 5.698c.589 0 1.12.051 1.606.156.483.104.895.274 1.241.507.344.235.611.543.804.929.19.385.284.864.284 1.437 0 .617-.139 1.134-.418 1.549-.28.414-.7.762-1.254 1.044.757.221 1.318.602 1.686 1.146.366.543.549 1.199.549 1.968 0 .637-.122 1.188-.369 1.655-.246.467-.58.852-1.009 1.155-.43.302-.925.525-1.489.67-.563.144-1.149.216-1.753.216H2V5.698h5.799zm-.27 4.979c.487 0 .882-.114 1.188-.343.305-.23.457-.587.457-1.073 0-.274-.051-.503-.152-.688-.1-.185-.236-.333-.41-.446-.173-.112-.37-.191-.59-.24-.222-.047-.451-.07-.689-.07H4.921v2.86h2.608zm.15 5.212c.267 0 .523-.024.764-.073.24-.05.454-.133.635-.254.183-.12.329-.283.438-.487.108-.203.162-.461.162-.773 0-.613-.179-1.054-.54-1.323-.36-.269-.838-.403-1.432-.403H4.921v3.313h2.758zm9.27-1.138c.315.298.768.447 1.36.447.422 0 .786-.104 1.09-.314.302-.208.487-.431.557-.667h1.876c-.3.927-.762 1.589-1.387 1.988-.622.399-1.376.597-2.259.597-.614 0-1.163-.097-1.645-.293-.482-.195-.892-.47-1.228-.828-.337-.356-.596-.787-.774-1.29-.18-.503-.27-1.054-.27-1.653 0-.577.092-1.113.278-1.608.185-.495.448-.921.792-1.28.342-.357.754-.636 1.235-.836.48-.2 1.016-.3 1.608-.3.655 0 1.23.124 1.723.372.494.248.9.584 1.221 1.009.319.424.547.913.682 1.47.135.554.174 1.15.116 1.786h-5.594c0 .58.167 1.098.482 1.396l-.003.004zm2.357-3.758c-.251-.275-.661-.412-1.229-.412-.362 0-.663.059-.904.181-.24.121-.432.27-.576.445-.143.174-.244.358-.302.55-.058.19-.093.37-.105.537h3.638c-.062-.603-.27-1.025-.522-1.301zM14.915 7.5h4.243v.97h-4.243V7.5z"/>
+        </svg>
+      </a>
+    </div>
+  </div>
+
+  <div class="footer reveal d8">Powered by Onezz Cardz  ·  © 2026</div>
+
+</div>
+
+<div class="lb" id="lb" onclick="closeLb()">
+  <div class="lb-inner" id="lbInner"></div>
+  <button class="lb-x">✕</button>
+</div>
+
+<button class="scrtop" id="scrtop" onclick="window.scrollTo({top:0,behavior:'smooth'})">
+  <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.8" stroke-linecap="round" stroke-linejoin="round"><polyline points="18 15 12 9 6 15"/></svg>
+</button>
+
+<script>
+/* QR CODE */
+const qrUrl = window.location.href || 'https://aria-chen.co';
+new QRCode(document.getElementById('qrcode'), {
+  text: qrUrl, width: 156, height: 156,
+  colorDark: '#1a1a1a', colorLight: '#ffffff',
+  correctLevel: QRCode.CorrectLevel.H
+});
+
+/* FLIP — fixed: scene has explicit height, faces are position:absolute */
+let flipped = false;
+function doFlip() {
+  flipped = !flipped;
+  document.getElementById('flipInner').classList.toggle('flipped', flipped);
+}
+
+/* SHARE */
+function shareCard() {
+  if (navigator.share) {
+    navigator.share({ title: 'Aria Chen — Creative Director', url: qrUrl });
+  } else {
+    navigator.clipboard.writeText(qrUrl).then(() => {
+      const btn = document.querySelector('.qr-share');
+      const orig = btn.innerHTML;
+      btn.textContent = '✓ Link Copied!';
+      setTimeout(() => { btn.innerHTML = orig; }, 2200);
+    });
+  }
+}
+
+/* DOWNLOAD */
+function dlPortfolio(e) {
+  e.preventDefault();
+  const el = document.querySelector('#dlText strong');
+  el.textContent = 'Preparing…';
+  setTimeout(() => { el.textContent = 'Portfolio'; }, 2000);
+}
+
+/* GALLERY */
+const galBg = {
+  g1:'linear-gradient(145deg,#2a1f0a,#d4a853)',
+  g2:'linear-gradient(145deg,#0a1a2a,#1e5fa0)',
+  g3:'linear-gradient(145deg,#1a0a2a,#7a3fa0)',
+  g4:'linear-gradient(145deg,#0a2a15,#1f8a44)',
+  g5:'linear-gradient(145deg,#2a0a0a,#a03030)',
+  g6:'linear-gradient(145deg,#1a1a0a,#6a6a20)',
+};
+function openLb(id) {
+  document.getElementById('lbInner').style.background = galBg[id] || '#222';
+  document.getElementById('lb').classList.add('open');
+}
+function closeLb() { document.getElementById('lb').classList.remove('open'); }
+
+/* SCROLL TOP */
+window.addEventListener('scroll', () => {
+  document.getElementById('scrtop').classList.toggle('on', scrollY > 280);
+});
+</script>
+</body>
+</html>
